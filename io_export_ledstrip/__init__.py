@@ -40,8 +40,8 @@ import bpy
 from .exporter import Exporter
 
 from bpy.props import BoolProperty
-from bpy.props import EnumProperty
-from bpy.props import StringProperty
+#from bpy.props import EnumProperty
+#from bpy.props import StringProperty
 from bpy.props import IntProperty
 
 
@@ -63,12 +63,12 @@ class ExportLedstrip(bpy.types.Operator):
 		description="Run the exporter in debug mode. Check the console for output",
 		default=False )
 	
-	CoordinateSystem = EnumProperty(
-		name="Coordinate System",
-		description="Use the selected coordinate system for export",
-		items=(('LEFT_HANDED', "Left-Handed", "Use a Y up, Z forward system or a Z up, -Y forward system"),
-			('RIGHT_HANDED', "Right-Handed", "Use a Y up, -Z forward system or a Z up, Y forward system")),
-		default='LEFT_HANDED' )
+	#CoordinateSystem = EnumProperty(
+	#	name="Coordinate System",
+	#	description="Use the selected coordinate system for export",
+	#	items=(('LEFT_HANDED', "Left-Handed", "Use a Y up, Z forward system or a Z up, -Y forward system"),
+	#		('RIGHT_HANDED', "Right-Handed", "Use a Y up, -Z forward system or a Z up, Y forward system")),
+	#	default='LEFT_HANDED' )
 	
 	Resolution = IntProperty(
 		name = 'Resolution',

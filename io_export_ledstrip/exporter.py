@@ -8,7 +8,9 @@ class Exporter:
 		self.Config = Config
 		self.context = context
 		
-		self.log( "Begin verbose logging\n" )
+		self.log( "ledstrip exporter" )
+		self.log( "begin verbose logging..." )
+	
 	
 	def execute(self):
 		
@@ -20,10 +22,10 @@ class Exporter:
 		# ensure Blender is currently in OBJECT mode to allow data access.
 		bpy.ops.object.mode_set(mode = 'OBJECT')
 		
-		for obj in selections: # for first selected object
-			for group in obj.users_group: # All groups
+		# for all curves in selection
+		for obj in selections:
+			for group in obj.users_group:
 				for obj in group.objects:
-					
 					if( obj.type == 'CURVE' ):
 						
 						self.log( 'converting curve %s' % obj.name )
@@ -43,8 +45,7 @@ class Exporter:
 						
 						
 						# create mesh out of curve
-						
-						bpy.ops.object.select_all(action='DESELECT') 
+						bpy.ops.object.select_all( action='DESELECT' ) 
 						scn.objects.active = obj
 						obj.select = True
 						
@@ -67,9 +68,7 @@ class Exporter:
 						obj.data.bevel_depth = def3
 						
 						
-						
 						# dump(obj.data)
-						
 						newObj = scn.objects.active
 						mesh = newObj.data
 						self.log( 'number of vertices=%d' % len(mesh.vertices) )
@@ -106,6 +105,7 @@ class Exporter:
 		self.log("ledstrip exported (%s)" % self.Config.filepath, MessageVerbose=True )
 		
 		return True
+	
 	
 	def log( self, String, MessageVerbose=False ):
 		if self.Config.Verbose is True or MessageVerbose == True:
