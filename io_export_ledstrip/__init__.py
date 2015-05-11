@@ -41,7 +41,7 @@ from .exporter import Exporter
 
 from bpy.props import BoolProperty
 #from bpy.props import EnumProperty
-#from bpy.props import StringProperty
+from bpy.props import StringProperty
 from bpy.props import IntProperty
 
 
