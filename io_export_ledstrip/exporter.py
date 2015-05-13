@@ -1,119 +1,130 @@
 import bpy
-
+import operator
 
 class Exporter:
 	
-	def __init__(self, Config, context):
+	def __init__( self, config, context ):
 		
-		self.Config = Config
+		self.config = config
 		self.context = context
 		
 		self.log( "ledstrip exporter" )
 		self.log( "begin verbose logging..." )
 	
-	
-	def execute(self):
+	def execute( self ):
 		
 		ledstripXML = ''
 		selections = bpy.context.selected_objects
-		scn = bpy.context.scene
-		active_obj = scn.objects.active
+		active_obj = bpy.context.scene.objects.active
 		
 		# ensure Blender is currently in OBJECT mode to allow data access.
-		bpy.ops.object.mode_set(mode = 'OBJECT')
+		bpy.ops.object.mode_set( mode = 'OBJECT' )
 		
-		# for all curves in selection
+		# go through all groups and export all curves alphabetically
 		for obj in selections:
 			for group in obj.users_group:
+				objs = []
 				for obj in group.objects:
 					if( obj.type == 'CURVE' ):
-						
-						self.log( 'converting curve %s' % obj.name )
-						self.log( 'location: %s' % obj.location )
-						
-						ledstripXML += '\t<segment name="{}">\n'.format( obj.name )
-						
-						#for spline in obj.data.splines:
-						#	self.log( 'number of bezier points: ', len( spline.bezier_points ) )
-						#	for point in spline.bezier_points:
-						#		self.log( 'coord: ', point.co )
-						#		self.log( 'left handle: ', point.handle_left )
-						#		self.log( 'right handle: ', point.handle_right )
-						#		
-						#		frmt = '\t<coord x="{:.2f}" y="{:.2f}" z="{:.2f}"></coord>\n'
-						#		ledstripXML += frmt.format( point.co.x, point.co.y, point.co.z )
-						
-						
-						# create mesh out of curve
-						bpy.ops.object.select_all( action='DESELECT' ) 
-						scn.objects.active = obj
-						obj.select = True
-						
-						def0 = obj.data.resolution_u
-						def1 = obj.data.fill_mode
-						def2 = obj.data.bevel_resolution
-						def3 = obj.data.bevel_depth
-						
-						obj.data.fill_mode = 'FULL'
-						obj.data.resolution_u = self.Config.Resolution
-						obj.data.bevel_resolution = 1 #resolution
-						obj.data.bevel_depth = 0.0 #thickness
-						bpy.ops.object.convert( target='MESH', keep_original=True )
-						
-						bpy.ops.group.objects_remove_all()
-						
-						obj.data.resolution_u = def0
-						obj.data.fill_mode = def1           #reverting
-						obj.data.bevel_resolution = def2
-						obj.data.bevel_depth = def3
-						
-						
-						# apply object transformation (required?)
-						#bpy.ops.object.transform_apply( location=True, rotation=True, scale=True )
-						
-						
-						# dump(obj.data)
-						newObj = scn.objects.active
-						mesh = newObj.data
-						wm = newObj.matrix_world
-						self.log( 'number of vertices=%d' % len(mesh.vertices) )
-						for vert in mesh.vertices:
-							co = vert.co
-							cog = wm * co # local to global transform
-							self.log( 'v %f %f %f' % ( cog.x, cog.y, cog.z ) )
-							frmt = '\t\t<coord x="{:.2f}" y="{:.2f}" z="{:.2f}"></coord>\n'
-							ledstripXML += frmt.format( cog.x, cog.y, cog.z )
-						
-						#self.log( 'number of faces=%d' % len(mesh.polygons) )
-						#for face in mesh.polygons:
-						#	self.log('face')
-						#	for vert in face.vertices:
-						#		self.log(vert)
-						
-						
-						# delete temporary mesh object
-						bpy.ops.object.delete( use_global=False )
-						
-						ledstripXML += '\t</segment>\n'
+						objs.append( obj )
+				ledstripXML += self.__export_objs( objs )
 		
 		
 		# restore previous selection
-		bpy.ops.object.select_all(action='DESELECT')
+		bpy.ops.object.select_all( action='DESELECT' )
 		for obj in selections:
 			obj.select = True
-		scn.objects.active = active_obj
+		bpy.context.scene.objects.active = active_obj
 		
 		# open the file and export XML
-		with open( self.Config.filepath, 'w' ) as f: # self.filepath, 'w' ) as f:
+		with open( self.config.filepath, 'w' ) as f: # self.filepath, 'w' ) as f:
 			f.write( '<ledstrip>\n' )
 			f.write( ledstripXML )
 			f.write( '</ledstrip>\n' )
 		
-		self.log("ledstrip exported (%s)" % self.Config.filepath, MessageVerbose=True )
+		self.log( "ledstrip exported (%s)" % self.config.filepath, MessageVerbose=True )
 		
 		return True
 	
 	
 	def log( self, String, MessageVerbose=False ):
-		if self.Config.Verbose is True or MessageVerbose == True:
+		if self.config.Verbose is True or MessageVerbose == True:
 			print( String )
+
+
+	def __export_objs( self, objs ):
+		
+		retXML = ''
+		
+		objs.sort( key = operator.attrgetter('name'))
+		
+		for obj in objs:
+			self.log( 'converting curve %s' % obj.name )
+			self.log( 'location: %s' % obj.location )
+			
+			retXML += '\t<segment name="{}">\n'.format( obj.name )
+			
+			#for spline in obj.data.splines:
+			#	self.log(  'number of bezier points: ', len( spline.bezier_points ) )
+			#	for point in spline.bezier_points:
+			#		self.log(  'coord: ', point.co )
+			#		self.log(  'left handle: ', point.handle_left )
+			#		self.log( 'right handle: ', point.handle_right )
+			#		
+			#		frmt = '\t<coord x="{:.2f}" y="{:.2f}" z="{:.2f}"></coord>\n'
+			#		ledstripXML += frmt.format( point.co.x, point.co.y, point.co.z )
+			
+			
+			# create mesh out of curve
+			bpy.ops.object.select_all( action='DESELECT' ) 
+			bpy.context.scene.objects.active = obj
+			obj.select = True
+			
+			def0 = obj.data.resolution_u
+			def1 = obj.data.fill_mode
+			def2 = obj.data.bevel_resolution
+			def3 = obj.data.bevel_depth
+			
+			obj.data.fill_mode = 'FULL'
+			obj.data.resolution_u = self.config.Resolution
+			obj.data.bevel_resolution = 1 #resolution
+			obj.data.bevel_depth = 0.0 #thickness
+			bpy.ops.object.convert( target='MESH', keep_original=True )
+			
+			bpy.ops.group.objects_remove_all()
+			
+			obj.data.resolution_u = def0
+			obj.data.fill_mode = def1           #reverting
+			obj.data.bevel_resolution = def2
+			obj.data.bevel_depth = def3
+			
+			
+			# apply object transformation (required?)
+			#bpy.ops.object.transform_apply( location=True, rotation=True, scale=True )
+			
+			
+			# dump(obj.data)
+			newObj = bpy.context.scene.objects.active
+			mesh = newObj.data
+			wm = newObj.matrix_world
+			self.log( 'number of vertices=%d' % len( mesh.vertices ) )
+			for vert in mesh.vertices:
+				co = vert.co
+				cog = wm * co # local to global transform
+				self.log( 'v %f %f %f' % ( cog.x, cog.y, cog.z ) )
+				frmt = '\t\t<coord x="{:.2f}" y="{:.2f}" z="{:.2f}"></coord>\n'
+				retXML += frmt.format( cog.x, cog.y, cog.z )
+			
+			#self.log( 'number of faces=%d' % len( mesh.polygons ) )
+			#for face in mesh.polygons:
+			#	self.log( 'face' )
+			#	for vert in face.vertices:
+			#		self.log( vert )
+			
+			
+			# delete temporary mesh object
+			bpy.ops.object.delete( use_global=False )
+			
+			retXML += '\t</segment>\n'
+		
+		return retXML
