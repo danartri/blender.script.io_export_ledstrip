@@ -81,9 +81,9 @@ class ExportLedstrip(bpy.types.Operator):
 		
 		self.filepath = bpy.path.ensure_ext(self.filepath, '.xml')
 	
-		from . import exporter
-		Exporter = exporter.Exporter(self, context)
-		Exporter.execute()
+		from . import Exporter
+		e = Exporter(self, context)
+		e.execute()
 		return {'FINISHED'}
 	
 	def invoke(self, context, event):
