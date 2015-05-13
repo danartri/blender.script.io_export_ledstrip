@@ -68,14 +68,21 @@ class Exporter:
 						obj.data.bevel_depth = def3
 						
 						
+						# apply object transformation (required?)
+						#bpy.ops.object.transform_apply( location=True, rotation=True, scale=True )
+						
+						
 						# dump(obj.data)
 						newObj = scn.objects.active
 						mesh = newObj.data
+						wm = newObj.matrix_world
 						self.log( 'number of vertices=%d' % len(mesh.vertices) )
 						for vert in mesh.vertices:
-							self.log( 'v %f %f %f' % (vert.co.x, vert.co.y, vert.co.z) )
+							co = vert.co
+							cog = wm * co # local to global transform
+							self.log( 'v %f %f %f' % ( cog.x, cog.y, cog.z ) )
 							frmt = '\t\t<coord x="{:.2f}" y="{:.2f}" z="{:.2f}"></coord>\n'
-							ledstripXML += frmt.format( vert.co.x, vert.co.y, vert.co.z )
+							ledstripXML += frmt.format( cog.x, cog.y, cog.z )
 						
 						#self.log( 'number of faces=%d' % len(mesh.polygons) )
 						#for face in mesh.polygons:
