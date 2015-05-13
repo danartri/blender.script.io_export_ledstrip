@@ -38,18 +38,18 @@ class Exporter:
 		
 		# open the file and export XML
 		with open( self.config.filepath, 'w' ) as f: # self.filepath, 'w' ) as f:
-			f.write( '<ledstrip>\n' )
+			f.write( '<ledstrip version="{}">\n'.format( self.config.version ) )
 			f.write( ledstripXML )
 			f.write( '</ledstrip>\n' )
 		
-		self.log( "ledstrip exported (%s)" % self.config.filepath, MessageVerbose=True )
+		self.log( "ledstrip exported (%s)" % self.config.filepath, messageVerbose=True )
 		
 		return True
 	
 	
-	def log( self, String, MessageVerbose=False ):
-		if self.config.Verbose is True or MessageVerbose == True:
-			print( String )
+	def log( self, string, messageVerbose=False ):
+		if self.config.verbose is True or messageVerbose == True:
+			print( string )
 
 
 	def __export_objs( self, objs ):
@@ -86,7 +86,7 @@ class Exporter:
 			def3 = obj.data.bevel_depth
 			
 			obj.data.fill_mode = 'FULL'
-			obj.data.resolution_u = self.config.Resolution
+			obj.data.resolution_u = self.config.resolution
 			obj.data.bevel_resolution = 1 #resolution
 			obj.data.bevel_depth = 0.0 #thickness
 			bpy.ops.object.convert( target='MESH', keep_original=True )

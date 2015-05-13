@@ -58,24 +58,29 @@ class ExportLedstrip(bpy.types.Operator):
 	
 	# Export options
 	
-	Verbose = BoolProperty(
+	verbose = BoolProperty(
 		name="Verbose",
 		description="Run the exporter in debug mode. Check the console for output",
 		default=False )
 	
-	#CoordinateSystem = EnumProperty(
+	#coordinateSystem = EnumProperty(
 	#	name="Coordinate System",
 	#	description="Use the selected coordinate system for export",
 	#	items=(('LEFT_HANDED', "Left-Handed", "Use a Y up, Z forward system or a Z up, -Y forward system"),
 	#		('RIGHT_HANDED', "Right-Handed", "Use a Y up, -Z forward system or a Z up, Y forward system")),
 	#	default='LEFT_HANDED' )
 	
-	Resolution = IntProperty(
+	resolution = IntProperty(
 		name = 'Resolution',
 		description = 'Resolution of mesh',
 		default = 4,
 		min = 1, max = 64 )
 	
+	version = IntProperty(
+		name = 'Version',
+		description = 'Version of LED Strip',
+		default = 0,
+		min = 0 )
 	
 	def execute(self, context):
 		
