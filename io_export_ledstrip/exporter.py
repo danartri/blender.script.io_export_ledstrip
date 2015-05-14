@@ -1,5 +1,7 @@
 import bpy
 import operator
+from mathutils import *
+from math import radians
 
 class Exporter:
 	
@@ -10,6 +12,21 @@ class Exporter:
 		
 		self.log( "ledstrip exporter" )
 		self.log( "begin verbose logging..." )
+		
+		
+		# setting up coordinate system
+		# SystemMatrix converts from right-handed, z-up to the target coordinate system
+		#self.systemMatrix = Matrix()
+		#
+		#if self.config.coordinateSystem == 'LEFT_HANDED':
+		#    self.systemMatrix *= Matrix.Scale( -1, 4, Vector( (0, 0, 1) ) )
+		#
+		#if self.config.upAxis == 'Y':
+		#    self.systemMatrix *= Matrix.Rotation( radians(-90), 4, 'X' )
+		
+		self.log( "global matrix" );
+		self.log( config.global_matrix )
+	
 	
 	def execute( self ):
 		
@@ -109,8 +126,9 @@ class Exporter:
 			wm = newObj.matrix_world
 			self.log( 'number of vertices=%d' % len( mesh.vertices ) )
 			for vert in mesh.vertices:
-				co = vert.co
-				cog = wm * co # local to global transform
+				co = wm * vert.co # local to global transform
+				cog = self.config.global_matrix * co # custom transform
+				#cog = self.systemMatrix * co
 				self.log( 'v %f %f %f' % ( cog.x, cog.y, cog.z ) )
 				frmt = '\t\t<coord x="{:.2f}" y="{:.2f}" z="{:.2f}"></coord>\n'
 				retXML += frmt.format( cog.x, cog.y, cog.z )

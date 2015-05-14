@@ -40,12 +40,20 @@ import bpy
 from .exporter import Exporter
 
 from bpy.props import BoolProperty
-#from bpy.props import EnumProperty
+from bpy.props import EnumProperty
 from bpy.props import StringProperty
 from bpy.props import IntProperty
+from bpy.props import FloatProperty
+from bpy_extras.io_utils import (
+                                 ExportHelper,
+                                 orientation_helper_factory,
+                                 axis_conversion,
+                                 )
+
+IOOrientationHelper = orientation_helper_factory( "IOOrientationHelper", axis_forward='-Z', axis_up='Y' )
 
 
-class ExportLedstrip(bpy.types.Operator):
+class ExportLedstrip( bpy.types.Operator, ExportHelper, IOOrientationHelper ):
 	"""Export selection to ledstrip"""
 	
 	bl_idname = "ledstrip.xml"
@@ -64,11 +72,18 @@ class ExportLedstrip(bpy.types.Operator):
 		default=False )
 	
 	#coordinateSystem = EnumProperty(
-	#	name="Coordinate System",
-	#	description="Use the selected coordinate system for export",
-	#	items=(('LEFT_HANDED', "Left-Handed", "Use a Y up, Z forward system or a Z up, -Y forward system"),
-	#		('RIGHT_HANDED', "Right-Handed", "Use a Y up, -Z forward system or a Z up, Y forward system")),
+	#	name = "Coordinate System",
+	#	description = "Use the selected coordinate system for export",
+	#	items = ( ( 'LEFT_HANDED', "Left-Handed", "Use a Y up, Z forward system or a Z up, -Y forward system" ),
+	#		( 'RIGHT_HANDED', "Right-Handed", "Use a Y up, -Z forward system or a Z up, Y forward system" ) ),
 	#	default='LEFT_HANDED' )
+	#
+	#upAxis = EnumProperty(
+	#	name = "Up Axis",
+	#	description = "The selected axis points upward",
+	#	items = ( ( 'Y', "Y", "The Y axis points up" ),
+	#	       ('Z', "Z", "The Z axis points up" ) ),
+	#	default = 'Y' )
 	
 	resolution = IntProperty(
 		name = 'Resolution',
@@ -82,12 +97,28 @@ class ExportLedstrip(bpy.types.Operator):
 		default = 0,
 		min = 0 )
 	
+	global_scale = FloatProperty(
+		name = "Scale",
+		default = 1.0,
+		min = 0.01, max = 1000.0 )
+	
+	
 	def execute(self, context):
 		
 		self.filepath = bpy.path.ensure_ext(self.filepath, '.xml')
-	
+		
+		from mathutils import Matrix
+		keywords = self.as_keywords( ignore=(
+			"axis_forward",
+			"axis_up",
+			"global_scale",
+			"check_existing",
+			"filter_glob" ))
+		self.global_matrix = ( Matrix.Scale( self.global_scale, 4 ) *
+				 axis_conversion( to_forward=self.axis_forward, to_up=self.axis_up ).to_4x4() )
+		
 		from . import Exporter
-		e = Exporter(self, context)
+		e = Exporter( self, context )
 		e.execute()
 		return {'FINISHED'}
 	
