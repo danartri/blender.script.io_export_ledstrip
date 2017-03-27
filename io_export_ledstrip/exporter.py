@@ -130,7 +130,7 @@ class Exporter:
 				cog = self.config.global_matrix * co # custom transform
 				#cog = self.systemMatrix * co
 				self.log( 'v %f %f %f' % ( cog.x, cog.y, cog.z ) )
-				frmt = '\t\t<coord x="{:.2f}" y="{:.2f}" z="{:.2f}"></coord>\n'
+				frmt = '\t\t<coord x="{:.3f}" y="{:.3f}" z="{:.3f}"></coord>\n'
 				retXML += frmt.format( cog.x, cog.y, cog.z )
 			
 			#self.log( 'number of faces=%d' % len( mesh.polygons ) )
