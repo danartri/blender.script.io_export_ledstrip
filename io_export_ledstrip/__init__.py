@@ -19,9 +19,9 @@
 bl_info = {
 	"name": "Export LED strip (.xml)",
 	"author": "Martin Froehlich (maybites.ch) & Aurelio Lucchesi (0rel.com)",
-	"version": (0, 0, 1),
-	"blender": (2, 7, 0),
-	"location": "File > Export > ledstrip (.xml)",
+	"version": (0, 0, 2),
+	"blender": (2, 80, 0),
+	"location": "File > Export > Ledstrip (.xml)",
 	"description": "The script exports Blender curves to custom XML.",
 	"warning": "Quick and dirty hack, no success guaranteed.",
 	"wiki_url": "",
@@ -31,9 +31,9 @@ bl_info = {
 
 # Ensure that we reload our dependencies if we ourselves are reloaded by Blender
 if "bpy" in locals():
-	import imp;
+	import imp
 	if "exporter" in locals():
-		imp.reload(exporter);
+		imp.reload(exporter)
 
 
 import bpy
@@ -46,27 +46,24 @@ from bpy.props import IntProperty
 from bpy.props import FloatProperty
 from bpy_extras.io_utils import (
                                  ExportHelper,
-                                 orientation_helper_factory,
+                                 orientation_helper,
                                  axis_conversion,
                                  )
 
-IOOrientationHelper = orientation_helper_factory( "IOOrientationHelper", axis_forward='-Z', axis_up='Y' )
 
-
-class ExportLedstrip( bpy.types.Operator, ExportHelper, IOOrientationHelper ):
-	"""Export selection to ledstrip"""
-	
+@orientation_helper(axis_forward='-Z', axis_up='Y')
+class ExportLedstrip( bpy.types.Operator, ExportHelper ):
 	bl_idname = "ledstrip.xml"
-	bl_label = "ledstrip XML exporter"
+	bl_label = "Ledstrip XML exporter"
 	bl_options = {'PRESET'}
 	filename_ext = ".xml"
 	
-	filepath = StringProperty( subtype='FILE_PATH' )
+	filepath : StringProperty( subtype='FILE_PATH' )
 	
 	
 	# Export options
 	
-	verbose = BoolProperty(
+	verbose : BoolProperty(
 		name="Verbose",
 		description="Run the exporter in debug mode. Check the console for output",
 		default=False )
@@ -85,19 +82,19 @@ class ExportLedstrip( bpy.types.Operator, ExportHelper, IOOrientationHelper ):
 	#	       ('Z', "Z", "The Z axis points up" ) ),
 	#	default = 'Y' )
 	
-	resolution = IntProperty(
+	resolution : IntProperty(
 		name = 'Resolution',
 		description = 'Resolution of mesh',
 		default = 4,
 		min = 1, max = 64 )
 	
-	version = IntProperty(
+	version : IntProperty(
 		name = 'Version',
 		description = 'Version of LED Strip',
-		default = 0,
-		min = 0 )
+		default = 1,
+		min = 1 )
 	
-	global_scale = FloatProperty(
+	global_scale : FloatProperty(
 		name = "Scale",
 		default = 1.0,
 		min = 0.01, max = 1000.0 )
@@ -114,7 +111,7 @@ class ExportLedstrip( bpy.types.Operator, ExportHelper, IOOrientationHelper ):
 			"global_scale",
 			"check_existing",
 			"filter_glob" ))
-		self.global_matrix = ( Matrix.Scale( self.global_scale, 4 ) *
+		self.global_matrix = ( Matrix.Scale( self.global_scale, 4 ) @
 				 axis_conversion( to_forward=self.axis_forward, to_up=self.axis_up ).to_4x4() )
 		
 		from . import Exporter
@@ -140,21 +137,22 @@ class ExportLedstrip( bpy.types.Operator, ExportHelper, IOOrientationHelper ):
 		return {'RUNNING_MODAL'}
 
 
+def menu_func_export_button(self, context):
+	self.layout.operator(ExportLedstrip.bl_idname, text="Ledstrip (.xml)")
 
-
-
-
-
-def menu_func(self, context):
-	self.layout.operator(ExportLedstrip.bl_idname, text="ledstrip (.xml)");
+classes = [
+	ExportLedstrip,
+]
 
 def register():
-	bpy.utils.register_module(__name__);
-	bpy.types.INFO_MT_file_export.append(menu_func);
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func_export_button)
 
-def unregister():
-	bpy.utils.unregister_module(__name__);
-	bpy.types.INFO_MT_file_export.remove(menu_func);
+def unregister():  # note how unregistering is done in reverse
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_button)
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
 
 if __name__ == "__main__":
 	register()

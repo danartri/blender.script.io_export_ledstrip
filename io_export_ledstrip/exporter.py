@@ -24,7 +24,7 @@ class Exporter:
 		#if self.config.upAxis == 'Y':
 		#    self.systemMatrix *= Matrix.Rotation( radians(-90), 4, 'X' )
 		
-		self.log( "global matrix" );
+		self.log( "global matrix" )
 		self.log( config.global_matrix )
 	
 	
@@ -32,26 +32,33 @@ class Exporter:
 		
 		ledstripXML = ''
 		selections = bpy.context.selected_objects
-		active_obj = bpy.context.scene.objects.active
+		active_obj = bpy.context.view_layer.objects.active
 		
 		# ensure Blender is currently in OBJECT mode to allow data access.
 		bpy.ops.object.mode_set( mode = 'OBJECT' )
 		
 		# go through all groups and export all curves alphabetically
+		#for obj in selections:
+		#	for group in obj.users_group:
+		#		objs = []
+		#		for obj in group.objects:
+		#			if( obj.type == 'CURVE' ):
+		#				objs.append( obj )
+		#		ledstripXML += self.__export_objs( objs )
+
+		objs = []
 		for obj in selections:
-			for group in obj.users_group:
-				objs = []
-				for obj in group.objects:
-					if( obj.type == 'CURVE' ):
-						objs.append( obj )
-				ledstripXML += self.__export_objs( objs )
+			if( obj.type == 'CURVE' ):
+				objs.append( obj )
+		
+		ledstripXML += self.__export_objs( objs )
 		
 		
 		# restore previous selection
 		bpy.ops.object.select_all( action='DESELECT' )
 		for obj in selections:
-			obj.select = True
-		bpy.context.scene.objects.active = active_obj
+			obj.select_set(True)
+		bpy.context.view_layer.objects.active = active_obj
 		
 		# open the file and export XML
 		with open( self.config.filepath, 'w' ) as f: # self.filepath, 'w' ) as f:
@@ -78,7 +85,7 @@ class Exporter:
 		for obj in objs:
 			self.log( 'converting curve %s' % obj.name )
 			self.log( 'location: %s' % obj.location )
-			
+
 			retXML += '\t<segment name="{}">\n'.format( obj.name )
 			
 			#for spline in obj.data.splines:
@@ -94,8 +101,8 @@ class Exporter:
 			
 			# create mesh out of curve
 			bpy.ops.object.select_all( action='DESELECT' ) 
-			bpy.context.scene.objects.active = obj
-			obj.select = True
+			bpy.context.view_layer.objects.active = obj
+			obj.select_set(True)
 			
 			def0 = obj.data.resolution_u
 			def1 = obj.data.fill_mode
@@ -108,7 +115,7 @@ class Exporter:
 			obj.data.bevel_depth = 0.0 #thickness
 			bpy.ops.object.convert( target='MESH', keep_original=True )
 			
-			bpy.ops.group.objects_remove_all()
+			#bpy.ops.group.objects_remove_all()
 			
 			obj.data.resolution_u = def0
 			obj.data.fill_mode = def1           #reverting
@@ -121,13 +128,13 @@ class Exporter:
 			
 			
 			# dump(obj.data)
-			newObj = bpy.context.scene.objects.active
+			newObj = bpy.context.view_layer.objects.active
 			mesh = newObj.data
 			wm = newObj.matrix_world
 			self.log( 'number of vertices=%d' % len( mesh.vertices ) )
 			for vert in mesh.vertices:
-				co = wm * vert.co # local to global transform
-				cog = self.config.global_matrix * co # custom transform
+				co = wm @ vert.co # local to global transform
+				cog = self.config.global_matrix @ co # custom transform
 				#cog = self.systemMatrix * co
 				self.log( 'v %f %f %f' % ( cog.x, cog.y, cog.z ) )
 				frmt = '\t\t<coord x="{:.3f}" y="{:.3f}" z="{:.3f}"></coord>\n'
